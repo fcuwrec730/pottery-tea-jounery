@@ -8,7 +8,7 @@ const regions = new Map([['日本','japan'],['臺灣','taiwan'],['中國','china
 const regionClass = country => regions.has(country) ? ' region-'+regions.get(country) : '';
 const convenience = ['直飛＋短程接駁','直飛＋跨城轉乘','需轉機','待評估'];
 let model, selected = {group:'records',id:'otani'};
-let category = '窯燒', mode = 'map', showAir = true;
+let category = '窯燒', showAir = true;
 let filters = {query:'',country:'',kiln:'',tea:'',convenience:'',kind:''};
 let map, mapMarkers, mapView;
 let visibleMapRows = [];
@@ -44,9 +44,9 @@ const title = (row,group) => group==='flights' ? row.origin+' → '+row.airport 
 const airportLabel = id => id+' · '+(find('airports',id)?.name || '');
 const locationText = row => [row.country,row.location].filter(Boolean).join(' · ');
 const summary = row => [row.category,row.kind,row.kiln,row.tea].filter(Boolean).join(' / ');
-function toolbar(showKind=true) {
+function toolbar() {
   const select = (key,label,options) => '<select data-filter="'+key+'" aria-label="'+label+'">'+option('',label,!filters[key])+options.map(o=>option(o,o,filters[key]===o)).join('')+'</select>';
-  return '<div class="toolbar"><div class="toolbar-top"><div class="tabs" aria-label="資料主題">'+['窯燒','茶葉','全部'].map(c=>tab('category',c,c==='茶葉'?'茶種':c,category===c)).join('')+'</div><div class="actions">'+(route()==='explore'?'<div class="tabs" aria-label="檢視方式">'+tab('mode','map','◎ 地圖',mode==='map')+tab('mode','list','▤ 資料卡',mode==='list')+'</div>':'')+button('reset','清除篩選')+'</div></div><div class="filters"><input data-filter="query" type="search" aria-label="搜尋資料" placeholder="搜尋產地、產品或地名" value="'+h(filters.query)+'">'+select('country','國家',unique(activeRows('records').map(r=>r.country)))+select('kiln','窯燒類型',unique(activeRows('records').map(r=>r.kiln)))+select('tea','茶種類型',unique(['綠茶','紅茶','烏龍茶','白茶','黃茶','黑茶',...activeRows('records').map(r=>r.tea)]))+select('convenience','交通方式',convenience)+(showKind?select('kind','資料類型',kinds):'')+'</div></div>';
+  return '<div class="toolbar"><div class="toolbar-top"><div class="tabs" aria-label="資料主題">'+['窯燒','茶葉','全部'].map(c=>tab('category',c,c==='茶葉'?'茶種':c,category===c)).join('')+'</div><div class="actions">'+button('reset','清除篩選')+'</div></div><div class="filters"><input data-filter="query" type="search" aria-label="搜尋資料" placeholder="搜尋產地、產品或地名" value="'+h(filters.query)+'">'+select('country','國家',unique(activeRows('records').map(r=>r.country)))+select('kiln','窯燒類型',unique(activeRows('records').map(r=>r.kiln)))+select('tea','茶種類型',unique(['綠茶','紅茶','烏龍茶','白茶','黃茶','黑茶',...activeRows('records').map(r=>r.tea)]))+select('convenience','交通方式',convenience)+select('kind','資料類型',kinds)+'</div></div>';
 }
 function results(producing=false) {
   const query = filters.query.toLowerCase().trim();
@@ -204,9 +204,7 @@ function explore() {
   const rows=results(), mapped=filters.kind ? rows : rows.filter(r=>['產地','茶園'].includes(r.kind));
   if (selected?.group==='records' && !rows.some(r=>r.id===selected.id)) selected = mapped[0] ? {group:'records',id:mapped[0].id} : null;
   if (!selected && mapped[0]) selected={group:'records',id:mapped[0].id};
-  const cards = rows.length ? '<div class="cards">'+rows.map(r=>recordCard(r)).join('')+'</div>' : '<div class="panel">'+empty('目前沒有符合條件的資料。')+'</div>';
-  if(mode==='list') return toolbar()+section('資料卡',rows.length+' 筆')+cards;
-  return toolbar()+'<div class="map-layout">'+mapPanel(mapped)+'<div class="panel detail" id="detailPanel"><div class="panel-title"><h2>旅遊指南</h2></div><div id="detailContent">'+detail(selected?.group,selected?.id)+'</div></div></div>'+section('目前資料',rows.length+' 筆，包含產地與關聯場域')+cards;
+  return toolbar()+'<div class="map-layout">'+mapPanel(mapped)+'<div class="panel detail" id="detailPanel"><div class="panel-title"><h2>旅遊指南</h2></div><div id="detailContent">'+detail(selected?.group,selected?.id)+'</div></div></div>';
 }
 const comparisonIds = new Set();
 const comparisonLimit = 3;
@@ -215,16 +213,16 @@ function canCompare(row, rows) {
   return comparisonIds.has(row.id) || (rows.length<comparisonLimit && (!rows.length || rows[0].category===row.category));
 }
 function compare() {
-  const rows=results(true);
+  const rows=results();
   const chosen=comparisonRows();
   const selectedNames=chosen.map(r=>r.name).join('、');
   const actions=button('show-comparison','並排比較','aria-disabled="'+(chosen.length<2)+'"'+(chosen.length<2?' disabled':''),'primary')+
     (chosen.length?button('clear-comparison','清除選取'):'');
-  return section('風土選集','瀏覽產地與茶園，可選同類別的兩至三筆並排比較。')+toolbar(false)+
+  return section('風土選集','瀏覽產地與關聯場域，可選同類別的兩至三筆並排比較。')+toolbar()+
     section('已選 '+chosen.length+'／'+comparisonLimit+' 筆',selectedNames,actions)+
-    table(['名稱','國家／地區','工藝／茶類','代表產品','關聯機場','交通便利性','查證狀態','比較'],rows.map(r=>[
+    table(['名稱','國家／地區','資料類型','工藝／茶類','代表產品','關聯機場','交通便利性','查證狀態','比較'],rows.map(r=>[
       button('detail',r.name,attr('records',r.id),'link-button')+'<br><small class="meta">'+h(r.location)+'</small>',
-      h(r.country),h(r.kiln||r.tea||'待補'),h(r.products||'待補'),
+      h(r.country),h(r.kind),h(r.kiln||r.tea||'待補'),h(r.products||'待補'),
       r.airports.map(code=>button('detail',code,attr('airports',code),'link-button')).join(' '),h(r.convenience||'待評估'),badge(r.status),
       '<input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
         (comparisonIds.has(r.id)?' checked':'')+(canCompare(r,chosen)?'':' disabled')+'>'
@@ -279,7 +277,7 @@ function render(keepSearch=false) {
     a.classList.toggle('active',active);
     if(active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
   }
-  const showMap=page==='explore'&&mode==='map';
+  const showMap=page==='explore';
   const existingMap=map?.getContainer();
   const existingNotice=map ? $('#mapNotice') : null;
   if(map&&!showMap) {
@@ -322,7 +320,6 @@ document.addEventListener('click',event=>{
     case 'detail': openDetail(group,id); break;
     case 'reset': for(const key of Object.keys(filters)) filters[key]=''; render(); fitAtlas(); break;
     case 'category': category=value; filters.kiln=''; filters.tea=''; filters.kind=''; selected=null; render(); fitAtlas(); break;
-    case 'mode': mode=value; render(); break;
     case 'map-reset': fitAtlas(); break;
   }
 });

@@ -1,107 +1,20 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>東亞窯燒旅行地圖 V1</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
-<style>
-  *{box-sizing:border-box}
-  body{margin:0;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;display:flex;flex-direction:column;height:100vh}
-  header{padding:10px 14px;background:#3b2f2f;color:#fff}
-  header h1{margin:0;font-size:18px}
-  header small{opacity:.8}
-  #bar{display:flex;flex-wrap:wrap;gap:8px;padding:8px 14px;background:#f3ede4;border-bottom:1px solid #ddd}
-  #bar input,#bar select,#bar button{padding:6px 10px;font-size:14px;border:1px solid #bbb;border-radius:6px;background:#fff}
-  #bar input{flex:1;min-width:160px}
-  #bar button{cursor:pointer}
-  #main{flex:1;display:flex;min-height:0}
-  #map{flex:1;background:#dfe9ef;min-height:300px}
-  #list{width:260px;overflow:auto;border-left:1px solid #ddd;font-size:14px}
-  #list div{padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer}
-  #list div:hover{background:#f3ede4}
-  .jp{color:#c0392b}.cn{color:#2471a3}
-  #note{padding:6px 14px;font-size:12px;background:#fff8e1;color:#7a5c00}
-  @media(max-width:700px){#main{flex-direction:column}#list{width:100%;height:30%;border-left:0;border-top:1px solid #ddd}}
-</style>
-</head>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="東亞窯燒與茶葉文化旅行地圖，探索產地、整理交通與研究資料。"><title>東亞窯燒與茶葉文化旅行地圖</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.2.0/lxgwwenkaitc-regular.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.2.0/lxgwwenkaitc-bold.css"><link rel="stylesheet" href="./style.css"><script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script><script type="module" src="./app.js"></script></head>
 <body>
-<header><h1>東亞窯燒旅行地圖 <small>V1｜日本與中國窯燒產地</small></h1></header>
-<div id="bar">
-  <input id="q" placeholder="搜尋窯燒名稱、地區、類型…">
-  <select id="country"><option value="all">全部國家</option><option value="Japan">日本</option><option value="China">中國</option></select>
-  <button id="reset">重設視角</button>
-</div>
-<div id="note">⚠ 標記位置為產區／城市代表座標，非精確窯址；資料尚未逐一驗證（verified: false）。</div>
-<div id="main"><div id="map"></div><div id="list"></div></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<script>
-if(typeof L==="undefined"){document.getElementById("map").innerHTML="<p style='padding:20px'>Leaflet 載入失敗，請確認網路連線後重新整理。</p>";throw new Error("Leaflet not loaded");}
-const kilns=[
-{id:"J01",name:"越前燒",country:"Japan",region:"福井縣",city:"越前町",category:"陶器（燒締）",lat:35.967,lng:135.983,desc:"日本六古窯之一，以陶器、自然釉及燒締技法著稱"},
-{id:"J02",name:"瀨戶燒",country:"Japan",region:"愛知縣",city:"瀨戶市",category:"陶器／瓷器",lat:35.224,lng:137.083,desc:"日本六古窯之一，陶器與瓷器均有發展"},
-{id:"J03",name:"常滑燒",country:"Japan",region:"愛知縣",city:"常滑市",category:"陶器（朱泥）",lat:34.887,lng:136.832,desc:"日本六古窯之一，以朱泥茶壺聞名"},
-{id:"J04",name:"信樂燒",country:"Japan",region:"滋賀縣",city:"甲賀市信樂町",category:"陶器",lat:34.967,lng:136.083,desc:"日本六古窯之一，以粗陶、自然釉及狸貓陶器著稱"},
-{id:"J05",name:"丹波燒",country:"Japan",region:"兵庫縣",city:"丹波篠山市",category:"陶器",lat:35.075,lng:135.218,desc:"日本六古窯之一，傳統陶器及生活器皿"},
-{id:"J06",name:"備前燒",country:"Japan",region:"岡山縣",city:"備前市",category:"陶器（無釉燒締）",lat:34.750,lng:134.250,desc:"日本六古窯之一，以無釉燒締及窯變特色著稱"},
-{id:"J07",name:"有田燒",country:"Japan",region:"佐賀縣",city:"有田町",category:"瓷器",lat:33.192,lng:129.883,desc:"日本代表性瓷器產地，與早期日本瓷器發展密切相關"},
-{id:"J08",name:"伊萬里燒",country:"Japan",region:"佐賀縣",city:"伊萬里市及周邊",category:"瓷器",lat:33.267,lng:129.883,desc:"與有田瓷器外銷歷史密切相關；需區分歷史伊萬里與現代產地"},
-{id:"J09",name:"波佐見燒",country:"Japan",region:"長崎縣",city:"波佐見町",category:"瓷器（日用）",lat:33.183,lng:129.933,desc:"以日常生活用瓷及量產技術著稱"},
-{id:"J10",name:"九谷燒",country:"Japan",region:"石川縣",city:"加賀市、小松市、能美市等",category:"瓷器（上繪）",lat:36.303,lng:136.315,desc:"以色彩鮮明的上繪裝飾著稱（多個生產聚落，後續支援多點）"},
-{id:"J11",name:"美濃燒",country:"Japan",region:"岐阜縣",city:"多治見市、土岐市、瑞浪市等",category:"陶器（志野、織部）",lat:35.333,lng:137.133,desc:"日本重要陶瓷產區，包含志野、織部等類型（多個聚落）"},
-{id:"J12",name:"大谷燒",country:"Japan",region:"德島縣",city:"鳴門市大麻町",category:"陶器",lat:34.167,lng:134.500,desc:"以大型陶器及藍灰色系等作品聞名；本專案特別關注德島地區"},
-{id:"J13",name:"萩燒",country:"Japan",region:"山口縣",city:"萩市及周邊",category:"陶器（茶陶）",lat:34.408,lng:131.400,desc:"茶陶文化重要產地"},
-{id:"J14",name:"小鹿田燒",country:"Japan",region:"大分縣",city:"日田市皿山地區",category:"陶器（民藝）",lat:33.375,lng:130.925,desc:"傳統民藝陶器，以飛鉋、刷毛目等裝飾技法著稱"},
-{id:"C01",name:"景德鎮窯",country:"China",region:"江西省",city:"景德鎮市",category:"瓷器",lat:29.269,lng:117.178,desc:"中國重要瓷器產地，青花瓷、粉彩等"},
-{id:"C02",name:"宜興紫砂",country:"China",region:"江蘇省",city:"宜興市",category:"紫砂（茶器）",lat:31.350,lng:119.820,desc:"紫砂壺及茶器文化"},
-{id:"C03",name:"龍泉窯",country:"China",region:"浙江省",city:"龍泉市及周邊",category:"青瓷",lat:28.075,lng:119.142,desc:"青瓷代表性產地"},
-{id:"C04",name:"德化窯",country:"China",region:"福建省",city:"德化縣",category:"白瓷",lat:25.492,lng:118.242,desc:"白瓷及陶瓷雕塑"},
-{id:"C05",name:"醴陵瓷",country:"China",region:"湖南省",city:"醴陵市",category:"釉下五彩瓷",lat:27.658,lng:113.503,desc:"釉下五彩瓷"},
-{id:"C06",name:"鈞瓷",country:"China",region:"河南省",city:"禹州市神垕鎮等",category:"鈞釉（窯變）",lat:34.000,lng:113.400,desc:"鈞釉、窯變"},
-{id:"C07",name:"汝瓷",country:"China",region:"河南省",city:"汝州市、寶豐縣等",category:"青瓷",lat:34.167,lng:112.833,desc:"宋代汝窯傳統，青瓷特色"},
-{id:"C08",name:"磁州窯",country:"China",region:"河北省",city:"磁縣、峰峰礦區等",category:"白地黑花",lat:36.350,lng:114.370,desc:"白地黑花裝飾等民間陶瓷"},
-{id:"C09",name:"潮州陶瓷",country:"China",region:"廣東省",city:"潮州市",category:"日用瓷／工藝陶瓷",lat:23.660,lng:116.620,desc:"日用瓷、工藝陶瓷"},
-{id:"C10",name:"石灣陶塑",country:"China",region:"廣東省",city:"佛山市石灣地區",category:"陶塑",lat:23.017,lng:113.100,desc:"人物陶塑、石灣公仔"},
-{id:"C11",name:"建窯",country:"China",region:"福建省",city:"南平市建陽區",category:"黑釉（建盞）",lat:27.330,lng:118.120,desc:"建盞、黑釉茶碗"}
-];
-const colors={Japan:"#c0392b",China:"#2471a3"};
-const names={Japan:"日本",China:"中國"};
-const home=[[22,100],[45,146]];
-const map=L.map("map").fitBounds(home);
-const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"});
-const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:18,attribution:"Tiles © Esri"});
-const carto=L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:18,attribution:"© OpenStreetMap contributors © CARTO"});
-osm.addTo(map);
-L.control.layers({"OpenStreetMap":osm,"Esri 街道圖":esri,"CARTO 淺色":carto},null,{position:"topright"}).addTo(map);
-let tileWarned=false;
-[osm,esri,carto].forEach(t=>t.on("tileerror",()=>{if(!tileWarned){tileWarned=true;document.getElementById("note").textContent="⚠ 底圖載入失敗，請用右上角圖層按鈕切換底圖；標記與清單仍可使用。"}}));
-setTimeout(()=>map.invalidateSize(),300);
-const layer=L.layerGroup().addTo(map);
-const markers={};
-function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function render(){
-  const q=document.getElementById("q").value.trim().toLowerCase();
-  const c=document.getElementById("country").value;
-  layer.clearLayers();
-  const list=document.getElementById("list");list.innerHTML="";
-  const shown=kilns.filter(k=>(c==="all"||k.country===c)&&(!q||[k.name,k.region,k.city,k.category,k.desc].join(" ").toLowerCase().includes(q)));
-  shown.forEach(k=>{
-    const m=L.circleMarker([k.lat,k.lng],{radius:9,color:"#fff",weight:2,fillColor:colors[k.country],fillOpacity:.9}).addTo(layer);
-    m.bindPopup(`<b>${esc(k.name)}</b>（${k.id}）<br>所在地：${names[k.country]}・${esc(k.region)}${esc(k.city)}<br>類型：${esc(k.category)}<br>特色：${esc(k.desc)}<br><small>座標為產區代表位置，未驗證</small>`);
-    markers[k.id]=m;
-    const d=document.createElement("div");
-    d.innerHTML=`<b class="${k.country==="Japan"?"jp":"cn"}">●</b> ${esc(k.name)}<br><small>${esc(k.region)}${esc(k.city)}</small>`;
-    d.onclick=()=>{map.setView([k.lat,k.lng],9);m.openPopup()};
-    list.appendChild(d);
-  });
-  if(!shown.length)list.textContent="查無符合的窯燒產地";
-  else if(q||c!=="all")map.fitBounds(L.latLngBounds(shown.map(k=>[k.lat,k.lng])).pad(.3),{maxZoom:9});
-}
-document.getElementById("q").addEventListener("input",render);
-document.getElementById("country").addEventListener("change",render);
-document.getElementById("reset").onclick=()=>{document.getElementById("q").value="";document.getElementById("country").value="all";render();map.fitBounds(home)};
-render();
-</script>
-</body>
-</html>
+<header class="site-header">
+  <a class="wordmark" href="#explore" aria-label="窯茶圖鑑首頁">窯茶圖鑑</a>
+  <nav class="site-nav" aria-label="主要導覽">
+    <a href="#explore">產地地圖</a>
+    <a href="#compare">產地比較</a>
+    <a href="#air">機場與航線</a>
+  </nav>
+</header>
+<main class="page">
+  <div class="page-context" id="pageContext" hidden><span id="crumb"></span></div>
+  <section class="hero" id="hero">
+    <h1>東亞窯燒與茶葉<span>文化旅行地圖</span></h1>
+    <p>從日本六古窯到景德鎮，沿著地圖查找產地、窯元和從臺灣出發的路線。</p>
+  </section>
+  <section id="workspace" aria-live="off">載入資料中…</section>
+</main>
+<dialog id="dialog"></dialog>
+</body></html>

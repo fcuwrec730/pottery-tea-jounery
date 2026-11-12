@@ -200,7 +200,7 @@
       "convenience": "直飛＋跨城轉乘",
       "kiln": "陶器",
       "features": "傳統大型陶甕與當代日用器並存。可向個別窯元查詢藍色器物的釉藥做法。",
-      "visited": false
+      "visited": true
     },
     {
       "id": "jingdezhen",
@@ -649,7 +649,7 @@
       "products": "洞庭山碧螺春",
       "description": "太湖洞庭東山及西山是核心產區，茶樹與果樹混植是當地特色。",
       "tea": "綠茶",
-      "visited": false
+      "visited": true
     },
     {
       "id": "tea-qimen",

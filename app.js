@@ -65,9 +65,11 @@ function visitLabel(visited) {
 function visitStatus(row) {
   return '<span class="badge'+(row.visited?'':' neutral')+'"><span>'+visitLabel(row.visited)+'</span></span>';
 }
-function recordCard(r,group='records') {
+function recordCard(r,group='records',compareControl='') {
   const id = attr(group,r.id);
-  return '<article class="record-card'+(group==='records'?regionClass(r.country):'')+'"><div class="inline">'+badge(r.status)+(group==='records'?badge(r.kind,'neutral'):'')+'</div><h3>'+button('detail',title(r,group),id,'link-button')+'</h3><div class="meta">'+h(group==='flights'?r.airline:locationText(r))+'</div><p>'+h(r.products||r.description||r.kind||r.id)+'</p><div class="actions">'+button('detail','查看資料',id)+(group==='records'?visitStatus(r):'')+'</div></article>';
+  const summary = compareControl ? r.description || r.features || r.products : r.products || r.description;
+  const products = compareControl && r.products && r.products!==summary ? '<p class="meta">代表產品 '+h(r.products)+'</p>' : '';
+  return '<article class="record-card'+(group==='records'?regionClass(r.country):'')+'"><div class="inline">'+badge(r.status)+(group==='records'?badge(r.kind,'neutral'):'')+'</div><h3>'+button('detail',title(r,group),id,'link-button')+'</h3><div class="meta">'+h(group==='flights'?r.airline:locationText(r))+'</div><p>'+plainText(summary||r.kind||r.id)+'</p>'+products+'<div class="actions">'+button('detail','查看資料',id)+(group==='records'?visitStatus(r):'')+compareControl+'</div></article>';
 }
 function detail(group,id) {
   const r = find(group,id);
@@ -227,13 +229,10 @@ function compare() {
     (chosen.length?button('clear-comparison','清除選取'):'');
   return section('風土選集','瀏覽產地與關聯場域，可選同類別的兩至三筆並排比較。')+toolbar()+
     section('已選 '+chosen.length+'／'+comparisonLimit+' 筆',selectedNames,actions)+
-    table(['名稱','國家／地區','資料類型','工藝／茶類','代表產品','關聯機場','交通便利性','查證狀態','比較'],rows.map(r=>[
-      button('detail',r.name,attr('records',r.id),'link-button')+'<br><small class="meta">'+h(r.location)+'</small>',
-      h(r.country),h(r.kind),h(r.kiln||r.tea||'待補'),h(r.products||'待補'),
-      r.airports.map(code=>button('detail',code,attr('airports',code),'link-button')).join(' '),h(r.convenience||'待評估'),badge(r.status),
-      '<input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
-        (comparisonIds.has(r.id)?' checked':'')+(canCompare(r,chosen)?'':' disabled')+'>'
-    ]));
+    (rows.length?'<div class="cards">'+rows.map(r=>recordCard(r,'records',
+      '<label class="inline"><input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
+        (comparisonIds.has(r.id)?' checked':'')+(canCompare(r,chosen)?'':' disabled')+'> 加入比較</label>'
+    )).join('')+'</div>':'<div class="panel">'+empty('目前沒有符合條件的資料。')+'</div>');
 }
 function showComparison() {
   const rows=comparisonRows();

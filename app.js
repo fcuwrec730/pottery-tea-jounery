@@ -44,15 +44,17 @@ const title = (row,group) => group==='flights' ? row.origin+' → '+row.airport 
 const airportLabel = id => id+' · '+(find('airports',id)?.name || '');
 const locationText = row => [row.country,row.location].filter(Boolean).join(' · ');
 const summary = row => [row.category,row.kind,row.kiln,row.tea].filter(Boolean).join(' / ');
+const visitFilters = new Map([['TONY 已走訪',true],['TONY 期待造訪',false]]);
 function toolbar() {
   const select = (key,label,options) => '<select data-filter="'+key+'" aria-label="'+label+'">'+option('',label,!filters[key])+options.map(o=>option(o,o,filters[key]===o)).join('')+'</select>';
-  return '<div class="toolbar"><div class="toolbar-top"><div class="tabs" aria-label="資料主題">'+['窯燒','茶葉','全部'].map(c=>tab('category',c,c==='茶葉'?'茶種':c,category===c)).join('')+'</div><div class="actions">'+button('reset','清除篩選')+'</div></div><div class="filters"><input data-filter="query" type="search" aria-label="搜尋資料" placeholder="搜尋產地、產品或地名" value="'+h(filters.query)+'">'+select('country','國家',unique(activeRows('records').map(r=>r.country)))+select('kiln','窯燒類型',unique(activeRows('records').map(r=>r.kiln)))+select('tea','茶種類型',unique(['綠茶','紅茶','烏龍茶','白茶','黃茶','黑茶',...activeRows('records').map(r=>r.tea)]))+select('convenience','交通方式',convenience)+select('kind','資料類型',kinds)+'</div></div>';
+  return '<div class="toolbar"><div class="toolbar-top"><div class="tabs" aria-label="資料主題">'+['窯燒','茶葉','全部'].map(c=>tab('category',c,c==='茶葉'?'茶種':c,category===c)).join('')+'</div><div class="actions">'+button('reset','清除篩選')+'</div></div><div class="filters"><input data-filter="query" type="search" aria-label="搜尋資料" placeholder="搜尋產地、產品或地名" value="'+h(filters.query)+'">'+select('country','國家',unique(activeRows('records').map(r=>r.country)))+select('kiln','窯燒類型',unique(activeRows('records').map(r=>r.kiln)))+select('tea','茶種類型',unique(['綠茶','紅茶','烏龍茶','白茶','黃茶','黑茶',...activeRows('records').map(r=>r.tea)]))+select('convenience','交通方式',convenience)+select('kind','資料類型',[...kinds,...visitFilters.keys()])+'</div></div>';
 }
 function results(producing=false) {
   const query = filters.query.toLowerCase().trim();
   return activeRows('records').filter(r => (!producing || ['產地','茶園'].includes(r.kind)) &&
     (category==='全部'||r.category===category) &&
-    ['country','kiln','tea','convenience','kind'].every(key => !filters[key] || filters[key]===r[key]) &&
+    ['country','kiln','tea','convenience'].every(key => !filters[key] || filters[key]===r[key]) &&
+    (!filters.kind || (visitFilters.has(filters.kind) ? (r.visited===true)===visitFilters.get(filters.kind) : r.kind===filters.kind)) &&
     (!query || [r.name,r.country,r.location,r.kiln,r.tea,r.features,r.description,r.products,r.notes,r.transport,...r.airports.map(airportLabel)].join(' ').toLowerCase().includes(query)));
 }
 const visitFootprints = '<svg aria-hidden="true" focusable="false" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M7 10c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2zM17 6c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2z"/><circle cx="6.1" cy="6.6" r="1.4"/><circle cx="9.5" cy="7.1" r="1"/><circle cx="17.9" cy="2.7" r="1.4"/><circle cx="14.6" cy="3.1" r="1"/></svg>';

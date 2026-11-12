@@ -1110,6 +1110,106 @@
       "description": "舞鶴是瑞穗茶區的代表探訪點，蜜香紅茶是當地特色。",
       "tea": "紅茶",
       "visited": false
+    },
+    {
+      "id": "tea-xinyang-maojian",
+      "name": "信陽毛尖",
+      "country": "中國",
+      "location": "河南省・信陽市",
+      "airports": [],
+      "category": "茶葉",
+      "kind": "產地",
+      "status": "已確認",
+      "date": "2026-11-12",
+      "notes": "地圖標記為代表市縣的約略位置。",
+      "lat": 32.12,
+      "lng": 114.06,
+      "products": "信陽毛尖",
+      "description": "河南信陽的代表性綠茶，產區涵蓋溮河區、平橋區及周邊多個縣。",
+      "tea": "綠茶",
+      "visited": false,
+      "links": [
+        {
+          "label": "地理標誌產地資料",
+          "url": "https://sinogi.cn/wap/index.php/product/gg/id/83"
+        }
+      ],
+      "sourceUpdate": "產地資料：地理標誌產地資料\n名茶名單：江門市蓬江區政府「十大名茶」\n更新日期 2026-11-12"
+    },
+    {
+      "id": "tea-huangshan-maofeng",
+      "name": "黃山毛峰",
+      "country": "中國",
+      "location": "安徽省・黃山市",
+      "airports": [],
+      "category": "茶葉",
+      "kind": "產地",
+      "status": "已確認",
+      "date": "2026-11-12",
+      "notes": "地圖標記為代表市縣的約略位置。",
+      "lat": 29.71,
+      "lng": 118.34,
+      "products": "黃山毛峰",
+      "description": "安徽黃山的代表性綠茶，成茶微卷，外形似雀舌，可見白毫。",
+      "tea": "綠茶",
+      "visited": false,
+      "links": [
+        {
+          "label": "黃山市政府",
+          "url": "https://www.huangshan.gov.cn/zwgk/public/6615714/11236663.html"
+        }
+      ],
+      "sourceUpdate": "產地資料：黃山市政府\n名茶名單：江門市蓬江區政府「十大名茶」\n更新日期 2026-11-12"
+    },
+    {
+      "id": "tea-luan-guapian",
+      "name": "六安瓜片",
+      "country": "中國",
+      "location": "安徽省・六安市金寨縣等",
+      "airports": [],
+      "category": "茶葉",
+      "kind": "產地",
+      "status": "已確認",
+      "date": "2026-11-12",
+      "notes": "地圖標記為代表市縣的約略位置。",
+      "lat": 31.73,
+      "lng": 115.93,
+      "products": "六安瓜片",
+      "description": "安徽六安的代表性綠茶，地理標誌保護區涵蓋金寨、霍山及舒城等地。",
+      "tea": "綠茶",
+      "visited": false,
+      "links": [
+        {
+          "label": "六安市政府",
+          "url": "https://www.luan.gov.cn/group1/M00/09/68/wKgSGWLXYuuAI2RdAAOuzBHkS4E395.pdf"
+        }
+      ],
+      "sourceUpdate": "產地資料：六安市政府\n名茶名單：江門市蓬江區政府「十大名茶」\n更新日期 2026-11-12"
+    },
+    {
+      "id": "tea-duyun-maojian",
+      "name": "都勻毛尖",
+      "country": "中國",
+      "location": "貴州省・黔南州都勻市",
+      "airports": [],
+      "category": "茶葉",
+      "kind": "產地",
+      "status": "已確認",
+      "date": "2026-11-12",
+      "notes": "地圖標記為代表市縣的約略位置。",
+      "lat": 26.26,
+      "lng": 107.52,
+      "products": "都勻毛尖",
+      "description": "貴州黔南的代表性綠茶，螺螄殼與團山是都勻市內的代表產區。",
+      "tea": "綠茶",
+      "visited": false,
+      "links": [
+        {
+          "label": "黔南州人民政府",
+          "url": "https://www.qiannan.gov.cn/zwgkztym/ztzcjj_5669360/zcwj_5669364/202410/P020241031536592053148.pdf"
+        }
+      ],
+      "sourceUpdate": "產地資料：黔南州人民政府\n名茶名單：江門市蓬江區政府「十大名茶」\n更新日期 2026-11-12"
     }
   ],
   "airports": [

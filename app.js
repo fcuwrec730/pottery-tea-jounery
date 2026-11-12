@@ -55,8 +55,13 @@ function results(producing=false) {
     ['country','kiln','tea','convenience','kind'].every(key => !filters[key] || filters[key]===r[key]) &&
     (!query || [r.name,r.country,r.location,r.kiln,r.tea,r.features,r.description,r.products,r.notes,r.transport,...r.airports.map(airportLabel)].join(' ').toLowerCase().includes(query)));
 }
+const visitFootprints = '<svg aria-hidden="true" focusable="false" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M7 10c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2zM17 6c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2z"/><circle cx="6.1" cy="6.6" r="1.4"/><circle cx="9.5" cy="7.1" r="1"/><circle cx="17.9" cy="2.7" r="1.4"/><circle cx="14.6" cy="3.1" r="1"/></svg>';
+function visitLabel(visited) {
+  return visited ? visitFootprints+' <strong>TONY 已走訪</strong>' :
+    '<span aria-hidden="true">✨</span> <strong>TONY 期待造訪</strong>';
+}
 function visitStatus(row) {
-  return badge(row.visited ? 'Tony去過' : 'Tony還沒去過', row.visited ? '' : 'neutral');
+  return '<span class="badge'+(row.visited?'':' neutral')+'"><span>'+visitLabel(row.visited)+'</span></span>';
 }
 function recordCard(r,group='records') {
   const id = attr(group,r.id);

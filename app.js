@@ -1,7 +1,7 @@
 const $ = selector => document.querySelector(selector);
 const workspace = $('#workspace');
 const dialog = $('#dialog');
-const names = {explore:'產地地圖',compare:'產地比較',air:'機場與航線'};
+const names = {explore:'環遊地圖',compare:'風土選集',air:'怎麼飛',knowledge:'知識專題'};
 const kinds = ['產地','店家','茶園','茶具','文化體驗','交通節點'];
 const statuses = ['已確認','待查證'];
 const regions = new Map([['日本','japan'],['臺灣','taiwan'],['中國','china']]);
@@ -208,13 +208,58 @@ function explore() {
   if(mode==='list') return toolbar()+section('資料卡',rows.length+' 筆')+cards;
   return toolbar()+'<div class="map-layout">'+mapPanel(mapped)+'<div class="panel detail" id="detailPanel"><div class="panel-title"><h2>旅遊指南</h2></div><div id="detailContent">'+detail(selected?.group,selected?.id)+'</div></div></div>'+section('目前資料',rows.length+' 筆，包含產地與關聯場域')+cards;
 }
+const comparisonIds = new Set();
+const comparisonLimit = 3;
+const comparisonRows = () => [...comparisonIds].map(id=>find('records',id)).filter(row=>row&&!row.trashedOn);
+function canCompare(row, rows) {
+  return comparisonIds.has(row.id) || (rows.length<comparisonLimit && (!rows.length || rows[0].category===row.category));
+}
 function compare() {
   const rows=results(true);
-  return section('產地比較','從工藝、代表產品和臺灣出發方式比較產地。')+toolbar(false)+table(['產地','國家／地區','工藝／茶類','代表產品','關聯機場','交通便利性','查證狀態'],rows.map(r=>[
-    button('detail',r.name,attr('records',r.id),'link-button')+'<br><small class="meta">'+h(r.location)+'</small>',h(r.country),h(r.kiln||r.tea||'待補'),h(r.products||'待補'),r.airports.map(code=>button('detail',code,attr('airports',code),'link-button')).join(' '),h(r.convenience||'待評估'),badge(r.status)]));
+  const chosen=comparisonRows();
+  const selectedNames=chosen.map(r=>r.name).join('、');
+  const actions=button('show-comparison','並排比較','aria-disabled="'+(chosen.length<2)+'"'+(chosen.length<2?' disabled':''),'primary')+
+    (chosen.length?button('clear-comparison','清除選取'):'');
+  return section('風土選集','瀏覽產地與茶園，可選同類別的兩至三筆並排比較。')+toolbar(false)+
+    section('已選 '+chosen.length+'／'+comparisonLimit+' 筆',selectedNames,actions)+
+    table(['名稱','國家／地區','工藝／茶類','代表產品','關聯機場','交通便利性','查證狀態','比較'],rows.map(r=>[
+      button('detail',r.name,attr('records',r.id),'link-button')+'<br><small class="meta">'+h(r.location)+'</small>',
+      h(r.country),h(r.kiln||r.tea||'待補'),h(r.products||'待補'),
+      r.airports.map(code=>button('detail',code,attr('airports',code),'link-button')).join(' '),h(r.convenience||'待評估'),badge(r.status),
+      '<input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
+        (comparisonIds.has(r.id)?' checked':'')+(canCompare(r,chosen)?'':' disabled')+'>'
+    ]));
+}
+function showComparison() {
+  const rows=comparisonRows();
+  if(rows.length<2) return;
+  const fields=[
+    ['國家／地區',r=>locationText(r)],
+    ['工藝／茶類',r=>r.kiln||r.tea],
+    ['代表產品',r=>r.products],
+    ['特色／介紹',r=>[r.features,r.description].filter(Boolean).join('\n')],
+    ['從臺灣出發',r=>r.transport],
+    ['關聯機場',r=>r.airports.map(airportLabel).join('、')],
+    ['交通便利性',r=>r.convenience],
+    ['查證狀態',r=>r.status],
+    ['資料來源與更新',sourceUpdate]
+  ];
+  const body=table(['比較項目',...rows.map(r=>r.name)],fields.map(([label,get])=>[
+    h(label),...rows.map(r=>plainText(get(r)||'—'))
+  ]));
+  showDialog('並排比較',body);
+}
+function knowledge() {
+  return section('知識專題')+'<div class="cards">'+
+    '<article class="record-card"><h3>製茶入門：綠茶與紅茶</h3>'+
+    '<p>綠茶在製程前段透過殺菁抑制酵素活性。紅茶先萎凋、揉捻，讓茶葉充分氧化，再乾燥。閱讀製程時，可以先看加熱出現在什麼階段。</p>'+
+    link('https://www.tbrs.gov.tw/ws.php?id=5273&print=Y','茶及飲料作物改良場：特色茶分類與加工製程 ↗')+'</article>'+
+    '<article class="record-card"><h3>陶瓷入門：從成形到出窯</h3>'+
+    '<p>陶土經過成形，可以再做表面裝飾或上釉，最後進窯燒成。電窯、瓦斯窯和柴燒都是可進一步認識的燒成方式。</p>'+
+    link('https://www.culture.ntpc.gov.tw/files/file_pool/2/0O148645332741653967/%E9%99%B6%E5%8D%9A%E9%A4%A8%E6%95%99%E5%85%B7%E7%B8%BD%E6%B8%85%E5%96%AE-%E5%90%AB%E6%95%99%E6%A1%88%E9%80%A3%E7%B5%902024.5%E7%89%88.pdf','鶯歌陶瓷博物館：陶瓷教具與教案 ↗')+'</article></div>';
 }
 function air() {
-  return section('機場與航線','查看從臺灣出發的航線及機場周邊產地。')+
+  return section('怎麼飛','查看從臺灣出發的航線及機場周邊產地。')+
     table(['機場','所在地','臺灣出發航線','關聯產地／茶園','機場資料'],model.airports.map(r=>[
       button('detail',airportLabel(r.id),attr('airports',r.id),'link-button'),h(locationText(r)),
       model.flights.filter(f=>f.airport===r.id).map(f=>button('detail',f.origin+' · '+f.kind+' · '+f.airline+(f.via?' · 經 '+f.via:''),attr('flights',f.id),'link-button')+' '+badge(f.status)).join('<br>')||'—',
@@ -243,7 +288,7 @@ function render(keepSearch=false) {
     map=null;
     mapMarkers=null;
   }
-  workspace.innerHTML=({explore,compare,air})[page]();
+  workspace.innerHTML=({explore,compare,air,knowledge})[page]();
   if(showMap&&existingMap) {
     $('#atlasMap').replaceWith(existingMap);
     $('#mapNotice').replaceWith(existingNotice);
@@ -272,6 +317,8 @@ document.addEventListener('click',event=>{
   const {act,group,id,value}=control.dataset;
   switch(act) {
     case 'close': dialog.close(); break;
+    case 'show-comparison': showComparison(); break;
+    case 'clear-comparison': comparisonIds.clear(); render(); break;
     case 'detail': openDetail(group,id); break;
     case 'reset': for(const key of Object.keys(filters)) filters[key]=''; render(); fitAtlas(); break;
     case 'category': category=value; filters.kiln=''; filters.tea=''; filters.kind=''; selected=null; render(); fitAtlas(); break;
@@ -287,6 +334,16 @@ workspace.addEventListener('compositionend',event=>{
   if(event.target.dataset.filter==='query'){filters.query=event.target.value;render(true);}
 });
 workspace.addEventListener('change',event=>{
+  const compareId=event.target.dataset.compareId;
+  if(compareId) {
+    const row=find('records',compareId);
+    if(!event.target.checked) comparisonIds.delete(compareId);
+    else if(row&&!row.trashedOn&&canCompare(row,comparisonRows())) comparisonIds.add(compareId);
+    render();
+    const replacement=[...workspace.querySelectorAll('[data-compare-id]')].find(input=>input.dataset.compareId===compareId);
+    replacement?.focus({preventScroll:true});
+    return;
+  }
   if(event.target.id==='showAir') {showAir=event.target.checked;render();return;}
   const key=event.target.dataset.filter;
   if(key && key!=='query') {filters[key]=event.target.value;render();if(category!=='窯燒'&&['country','tea'].includes(key))fitAtlas();}

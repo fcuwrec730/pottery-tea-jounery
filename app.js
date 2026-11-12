@@ -49,13 +49,28 @@ function toolbar() {
   const select = (key,label,options) => '<select data-filter="'+key+'" aria-label="'+label+'">'+option('',label,!filters[key])+options.map(o=>option(o,o,filters[key]===o)).join('')+'</select>';
   return '<div class="toolbar"><div class="toolbar-top"><div class="tabs" aria-label="資料主題">'+['窯燒','茶葉','全部'].map(c=>tab('category',c,c==='茶葉'?'茶種':c,category===c)).join('')+'</div><div class="actions">'+button('reset','清除篩選')+'</div></div><div class="filters"><input data-filter="query" type="search" aria-label="搜尋資料" placeholder="搜尋產地、產品或地名" value="'+h(filters.query)+'">'+select('country','國家',unique(activeRows('records').map(r=>r.country)))+select('kiln','窯燒類型',unique(activeRows('records').map(r=>r.kiln)))+select('tea','茶種類型',unique(['綠茶','紅茶','烏龍茶','白茶','黃茶','黑茶',...activeRows('records').map(r=>r.tea)]))+select('convenience','交通方式',convenience)+select('kind','資料類型',[...kinds,...visitFilters.keys()])+'</div></div>';
 }
+const isKilnShop = row => row.category==='窯燒' && row.kind==='店家';
+
 function results(producing=false) {
   const query = filters.query.toLowerCase().trim();
-  return activeRows('records').filter(r => (!producing || ['產地','茶園'].includes(r.kind)) &&
-    (category==='全部'||r.category===category) &&
-    ['country','kiln','tea','convenience'].every(key => !filters[key] || filters[key]===r[key]) &&
-    (!filters.kind || (visitFilters.has(filters.kind) ? (r.visited===true)===visitFilters.get(filters.kind) : r.kind===filters.kind)) &&
-    (!query || [r.name,r.country,r.location,r.kiln,r.tea,r.features,r.description,r.products,r.notes,r.transport,...r.airports.map(airportLabel)].join(' ').toLowerCase().includes(query)));
+  const rows = activeRows('records');
+  const shopsByParent = new Map();
+  for (const shop of rows.filter(isKilnShop)) {
+    if (!shopsByParent.has(shop.parent)) shopsByParent.set(shop.parent,[]);
+    shopsByParent.get(shop.parent).push(shop);
+  }
+  const matchesQuery = row => [row.name,row.country,row.location,row.kiln,row.tea,row.features,row.description,row.products,row.notes,row.transport,...row.airports.map(airportLabel)].join(' ').toLowerCase().includes(query);
+  return rows.filter(row => {
+    if (isKilnShop(row) || (producing && !['產地','茶園'].includes(row.kind))) return false;
+    if (category!=='全部' && row.category!==category) return false;
+    if (!['country','kiln','tea','convenience'].every(key => !filters[key] || filters[key]===row[key])) return false;
+    const shops = shopsByParent.get(row.id) ?? [];
+    const kind = filters.kind;
+    const matchesKind = !kind || (visitFilters.has(kind)
+      ? (row.visited===true)===visitFilters.get(kind)
+      : row.kind===kind || (kind==='店家' && shops.length>0));
+    return matchesKind && (!query || matchesQuery(row) || shops.some(matchesQuery));
+  });
 }
 const visitFootprints = '<svg aria-hidden="true" focusable="false" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M7 10c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2zM17 6c-2.3 0-3.7 2.2-3.1 4.3.3 1 .9 1.7 1 2.9.1 1.4.9 2.3 2.1 2.3s2-1 2-2.3c0-1.2.7-2 1-3 .5-2.1-.8-4.2-3-4.2z"/><circle cx="6.1" cy="6.6" r="1.4"/><circle cx="9.5" cy="7.1" r="1"/><circle cx="17.9" cy="2.7" r="1.4"/><circle cx="14.6" cy="3.1" r="1"/></svg>';
 function visitLabel(visited) {
@@ -84,7 +99,7 @@ function detail(group,id) {
   return '<div class="detail-body'+(group==='records'?regionClass(r.country):'')+'"><div class="inline">'+badge(r.status)+badge(group==='records'?summary(r):group==='airports'?id:r.kind,'neutral')+'</div><h3>'+h(title(r,group))+'</h3><div class="meta">'+h(group==='flights'?[r.airline,r.via&&'經 '+r.via].filter(Boolean).join(' · '):locationText(r))+'</div>'+(group==='records'?'<div class="actions">'+visitStatus(r)+'</div>':'')+
     segment('產地／場域介紹',r.description)+segment('窯業特色',r.features)+segment('代表產品',r.products)+
     (parent?'<h4>所屬產地</h4>'+button('detail',parent.name,attr('records',r.parent),'link-button'):'')+
-    (children.length?'<h4>店家與文化體驗</h4><div class="detail-list">'+children.map(c=>detailRow('records',c,c.name,c.kind)).join('')+'</div>':'')+
+    (children.length?'<h4>'+(r.category==='窯燒'?'窯元與店家':'店家與文化體驗')+'</h4><div class="detail-list">'+children.map(c=>detailRow('records',c,c.name,c.kind)).join('')+'</div>':'')+
     segment('從臺灣出發',r.transport)+
     (group==='records'&&linkedAirports.length?'<h4>關聯機場</h4><div class="detail-list">'+linkedAirports.map(code=>detailRow('airports',find('airports',code),airportLabel(code),'')).join('')+'</div>':'')+
     (flights.length?'<h4>臺灣出發航線</h4><div class="detail-list">'+flights.map(f=>detailRow('flights',f,f.origin+' → '+f.airport,f.kind+' · '+f.airline+(f.via?' · 經 '+f.via:''))).join('')+'</div>':'')+

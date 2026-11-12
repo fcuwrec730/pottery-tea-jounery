@@ -25,6 +25,15 @@ function link(url,label='資料來源 ↗') {
   } catch {}
   return '';
 }
+const cardLinks = row => row.links ?? (row.url ? [{label:'官方／店家連結',url:row.url}] : []);
+const sourceUpdate = row => row.sourceUpdate ?? [row.source,row.date && '更新日期 '+row.date].filter(Boolean).join('\n');
+const plainText = value => h(value).replace(/\r?\n/g,'<br>');
+function cardReferences(row) {
+  const links = cardLinks(row).map(item=>link(item.url,item.label||item.url)).join('');
+  const source = sourceUpdate(row);
+  return (links?'<h4>相關連結</h4><div class="inline">'+links+'</div>':'')+
+    (source?'<h4>資料來源與更新</h4><p>'+plainText(source)+'</p>':'');
+}
 const button = (action,label,extra='',cls='secondary') => '<button type="button" class="'+cls+'" data-act="'+action+'" '+extra+'>'+h(label)+'</button>';
 const attr = (group,id) => 'data-group="'+h(group)+'" data-id="'+h(id)+'"';
 const empty = text => '<div class="empty">'+h(text)+'</div>';
@@ -72,7 +81,7 @@ function detail(group,id) {
     (flights.length?'<h4>臺灣出發航線</h4><div class="detail-list">'+flights.map(f=>detailRow('flights',f,f.origin+' → '+f.airport,f.kind+' · '+f.airline+(f.via?' · 經 '+f.via:''))).join('')+'</div>':'')+
     (relatedPlaces.length?'<h4>關聯產地</h4><div class="detail-list">'+relatedPlaces.map(p=>detailRow('records',p,p.name,p.location)).join('')+'</div>':'')+
     (group==='flights'&&find('airports',r.airport)?'<h4>抵達機場</h4>'+button('detail',airportLabel(r.airport),attr('airports',r.airport),'link-button'):'')+
-    segment('備註',r.notes)+'<h4>來源與更新</h4><div class="inline">'+link(r.url,'官方／店家連結 ↗')+link(r.source)+'</div><p class="meta">更新日期 '+h(r.date||'未填')+'</p></div>';
+    segment('備註',r.notes)+cardReferences(r)+'</div>';
 }
 const geo = row => row.lat!=='' && row.lng!=='' && row.lat!=null && row.lng!=null &&
   Number.isFinite(Number(row.lat)) && Number.isFinite(Number(row.lng)) &&
@@ -211,7 +220,7 @@ function air() {
       model.flights.filter(f=>f.airport===r.id).map(f=>button('detail',f.origin+' · '+f.kind+' · '+f.airline+(f.via?' · 經 '+f.via:''),attr('flights',f.id),'link-button')+' '+badge(f.status)).join('<br>')||'—',
       activeRows('records').filter(p=>p.airports.includes(r.id)&&['產地','茶園'].includes(p.kind)).map(p=>button('detail',p.name,attr('records',p.id),'link-button')).join(' · ')||'—',badge(r.status)
     ]))+section('航線查證','航線狀態和機場資料狀態各自標記。航空公司為首批盤點，請依日期查核。')+
-    table(['出發 → 抵達','方式','轉機點','航空公司','狀態','來源／日期'],model.flights.map(r=>[button('detail',title(r,'flights'),attr('flights',r.id),'link-button'),h(r.kind),h(r.via||'—'),h(r.airline),badge(r.status),link(r.source)+'<br>'+h(r.date)]));
+    table(['出發 → 抵達','方式','轉機點','航空公司','狀態','資料來源與更新'],model.flights.map(r=>[button('detail',title(r,'flights'),attr('flights',r.id),'link-button'),h(r.kind),h(r.via||'—'),h(r.airline),badge(r.status),plainText(sourceUpdate(r))]));
 }
 function render(keepSearch=false) {
   if (!model) return;

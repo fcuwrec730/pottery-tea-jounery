@@ -242,7 +242,7 @@ function compare() {
   const selectedNames=chosen.map(r=>r.name).join('、');
   const actions=button('show-comparison','並排比較','aria-disabled="'+(chosen.length<2)+'"'+(chosen.length<2?' disabled':''),'primary')+
     (chosen.length?button('clear-comparison','清除選取'):'');
-  return section('風土選集','瀏覽產地與關聯場域，可選同類別的兩至三筆並排比較。')+toolbar()+
+  return section('風土選集','瀏覽產地與關聯場域。')+toolbar()+
     section('已選 '+chosen.length+'／'+comparisonLimit+' 筆',selectedNames,actions)+
     (rows.length?'<div class="cards">'+rows.map(r=>recordCard(r,'records',
       '<label class="inline"><input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
@@ -291,7 +291,7 @@ function render(keepSearch=false) {
   const selection = keepSearch ? $('[data-filter="query"]')?.selectionStart : null;
   const page=route();
   $('#hero').hidden=page!=='explore';
-  $('#pageContext').hidden=page==='explore';
+  $('#pageContext').hidden=page==='explore'||page==='compare';
   $('#crumb').textContent=names[page];
   for(const a of document.querySelectorAll('.site-nav a')) {
     const active=a.hash==='#'+page;

@@ -120,3 +120,4 @@
 .media-gallery figure{margin:0;min-width:0}
 .media-gallery img,.media-gallery video{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#edf2f6;border-radius:4px}
 .media-gallery figcaption{font-size:12px;overflow-wrap:anywhere}
+#workspace.collection-spacing { padding-block-start: clamp(24px, 4vw, 40px); }

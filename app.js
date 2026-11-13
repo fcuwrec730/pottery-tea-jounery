@@ -292,6 +292,7 @@ function render(keepSearch=false) {
   const page=route();
   $('#hero').hidden=page!=='explore';
   $('#pageContext').hidden=page==='explore'||page==='compare';
+  workspace.classList.toggle('collection-spacing',page==='compare');
   $('#crumb').textContent=names[page];
   for(const a of document.querySelectorAll('.site-nav a')) {
     const active=a.hash==='#'+page;

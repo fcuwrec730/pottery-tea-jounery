@@ -1,7 +1,7 @@
 const $ = selector => document.querySelector(selector);
 const workspace = $('#workspace');
 const dialog = $('#dialog');
-const names = {explore:'環遊地圖',compare:'風土選集',air:'怎麼飛',knowledge:'知識專題'};
+const names = {explore:'環遊地圖',compare:'產地巡禮',air:'怎麼飛',knowledge:'知識專題'};
 const kinds = ['產地','店家','茶園','茶具','文化體驗','交通節點'];
 const statuses = ['已確認','待查證'];
 const regions = new Map([['日本','japan'],['臺灣','taiwan'],['中國','china']]);
@@ -242,7 +242,7 @@ function compare() {
   const selectedNames=chosen.map(r=>r.name).join('、');
   const actions=button('show-comparison','並排比較','aria-disabled="'+(chosen.length<2)+'"'+(chosen.length<2?' disabled':''),'primary')+
     (chosen.length?button('clear-comparison','清除選取'):'');
-  return section('風土選集','瀏覽產地與關聯場域。')+toolbar()+
+  return section('產地巡禮','瀏覽產地與關聯場域。')+toolbar()+
     section('已選 '+chosen.length+'／'+comparisonLimit+' 筆',selectedNames,actions)+
     (rows.length?'<div class="cards">'+rows.map(r=>recordCard(r,'records',
       '<label class="inline"><input type="checkbox" data-compare-id="'+h(r.id)+'" aria-label="比較 '+h(r.name)+'"'+
